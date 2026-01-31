@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR School Attendance</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
+        input { padding: 10px; font-size: 18px; border: 2px solid #333; border-radius: 5px; width: 80%; }
+        .status { margin-top: 20px; font-weight: bold; color: green; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Scan Student ID</h2>
+        <p>පහත පතනය (Input) මත ක්ලික් කර QR එක Scan කරන්න</p>
+        <input type="text" id="qr_input" autofocus placeholder="Waiting for scan...">
+        <div id="display_msg" class="status"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
+    <script>
+        // පියවර 2 දී ලැබුණු ඔයාගේ Firebase Config එක මෙතනට දාන්න
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            databaseURL: "YOUR_DB_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // QR එක Scan කරන විට වැඩ කරන කොටස
+        const qrInput = document.getElementById('qr_input');
+        const msg = document.getElementById('display_msg');
+
+        qrInput.addEventListener('input', (e) => {
+            const studentIndex = e.target.value;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0]; // අද දිනය (YYYY-MM-DD)
+            const timeStr = now.toLocaleTimeString(); // වේලාව
+
+            if(studentIndex.length >= 4) { // Index එකේ දිග අනුව
+                // Database එකට සේව් කිරීම
+                database.ref('attendance/' + dateStr + '/' + studentIndex).set({
+                    time: timeStr,
+                    status: "Present"
+                }).then(() => {
+                    msg.innerText = "Marked: " + studentIndex + " at " + timeStr;
+                    qrInput.value = ""; // ආපහු clear කරනවා ඊළඟ scan එකට
+                });
+            }
+        });
+    </script>
+</body>
+</html>
