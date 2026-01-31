@@ -1,62 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR School Attendance</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
-        .box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
-        input { padding: 10px; font-size: 18px; border: 2px solid #333; border-radius: 5px; width: 80%; }
-        .status { margin-top: 20px; font-weight: bold; color: green; }
-    </style>
+    <title>School Admin System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
 
-    <div class="box">
-        <h2>Scan Student ID</h2>
-        <p>පහත පතනය (Input) මත ක්ලික් කර QR එක Scan කරන්න</p>
-        <input type="text" id="qr_input" autofocus placeholder="Waiting for scan...">
-        <div id="display_msg" class="status"></div>
-    </div>
+    <header class="bg-blue-600 text-white p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fas fa-school mr-2"></i> My School Dashboard</h1>
+            <span class="bg-green-500 px-3 py-1 rounded-full text-sm">System Live</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto mt-10 p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
+                <h3 class="text-lg font-bold mb-4 text-gray-700"><i class="fas fa-user-plus text-blue-500"></i> Register Student</h3>
+                <div class="space-y-3">
+                    <input type="text" id="s_name" placeholder="Student Full Name" class="w-full p-2 border rounded-lg focus:outline-blue-500">
+                    <input type="text" id="s_index" placeholder="Index Number (Ex: 1001)" class="w-full p-2 border rounded-lg focus:outline-blue-500">
+                    <input type="text" id="s_phone" placeholder="Parent WhatsApp (947xxxxxxxx)" class="w-full p-2 border rounded-lg focus:outline-blue-500">
+                    <button onclick="saveStudent()" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition">Save Student</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500">
+                <h3 class="text-lg font-bold mb-4 text-gray-700"><i class="fas fa-qrcode text-green-500"></i> Attendance Scanner</h3>
+                <p class="text-sm text-gray-500 mb-2">Scan QR or Type Index and Press Enter</p>
+                <input type="text" id="qr_input" class="w-full p-4 text-center text-2xl font-bold border-2 border-green-400 rounded-lg" placeholder="SCAN NOW">
+                <div id="result_msg" class="mt-4 p-3 rounded-lg text-center hidden"></div>
+            </div>
+
+        </div>
+
+        <div class="mt-10 bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-lg font-bold mb-4 text-gray-700">Today's Attendance List</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-3 border">Index</th>
+                            <th class="p-3 border">Name</th>
+                            <th class="p-3 border">Time</th>
+                            <th class="p-3 border">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance_table">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
 
     <script>
-        // පියවර 2 දී ලැබුණු ඔයාගේ Firebase Config එක මෙතනට දාන්න
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "YOUR_DB_URL",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        // මේ කොටස අපි ඊළඟ පියවරේදී Database එකට සම්බන්ධ කරමු
+        function saveStudent() {
+            alert("අපි ඊළඟ පියවරේදී මේ දත්ත Database එකට සේව් කරමු!");
+        }
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // QR එක Scan කරන විට වැඩ කරන කොටස
-        const qrInput = document.getElementById('qr_input');
-        const msg = document.getElementById('display_msg');
-
-        qrInput.addEventListener('input', (e) => {
-            const studentIndex = e.target.value;
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0]; // අද දිනය (YYYY-MM-DD)
-            const timeStr = now.toLocaleTimeString(); // වේලාව
-
-            if(studentIndex.length >= 4) { // Index එකේ දිග අනුව
-                // Database එකට සේව් කිරීම
-                database.ref('attendance/' + dateStr + '/' + studentIndex).set({
-                    time: timeStr,
-                    status: "Present"
-                }).then(() => {
-                    msg.innerText = "Marked: " + studentIndex + " at " + timeStr;
-                    qrInput.value = ""; // ආපහු clear කරනවා ඊළඟ scan එකට
-                });
+        document.getElementById('qr_input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const val = e.target.value;
+                document.getElementById('result_msg').className = "mt-4 p-3 rounded-lg text-center bg-green-100 text-green-700 block";
+                document.getElementById('result_msg').innerText = "Marked Present for: " + val;
+                e.target.value = "";
             }
         });
     </script>
